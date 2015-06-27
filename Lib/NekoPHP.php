@@ -74,7 +74,7 @@ class NekoPHP
      */
     public static function getModuleUrl()
     {
-        return '//'.$_SERVER['HTTP_HOST'].self::$module_url;
+        return '//'.$_SERVER['HTTP_HOST'].self::$url_module;
     }
 
     /**
