@@ -1,0 +1,28 @@
+{
+	"name": "scriptkitties/neko.php",
+	"description": "A lightweight, modular PHP framework",
+	"license": "GPLv3",
+	"authors": [
+		{
+			"name": "Patrick Spek",
+			"email": "p.spek@tyil.nl"
+		}
+	],
+	"repositories": [
+		{
+			"type": "composer",
+			"url":  "https://packages.zendframework.com/"
+		}
+	],
+	"require": {
+		"twig/twig": "~1.0",
+		"zendframework/zend-db": "^2.5"
+	},
+	"autoload": {
+		"psr-4": {
+			"NekoPHP\\Global\\": "Global",
+			"NekoPHP\\Modules\\": "Modules",
+			"NekoPHP\\": "Lib"
+		}
+	}
+}
