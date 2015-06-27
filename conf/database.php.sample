@@ -1,0 +1,10 @@
+<?php
+
+return [
+    'driver'   => 'Pdo_Mysql',
+    'host'     => 'localhost',
+    'dbname'   => 'nekophp',
+    'username' => 'root',
+    'password' => ''
+];
+
