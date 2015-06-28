@@ -17,6 +17,11 @@ abstract class DbObject
     protected static $idColumn = 'id';
 
     /**
+     * @var array[string => array[string]]
+     */
+    protected static $relations = [];
+
+    /**
      * @var string
      */
     protected static $table;
@@ -35,6 +40,11 @@ abstract class DbObject
      * @var \Exception
      */
     private $exception;
+
+    /**
+     * @var array[string => \NekoPHP\DbObject]
+     */
+    private $relation_models;
 
     /**
      * @return array[string]
@@ -60,23 +70,26 @@ abstract class DbObject
         return $table;
     }
 
+    protected function relationOneToOne($relation_id)
+    {
+        if (!isset($this->relation_models[$relation_id])) {
+            $model = static::$relations[$relation_id][0];
+
+            $this->relation_models[$relation_id] = new $model($this->id);
+        }
+
+        return $this->relation_models[$relation_id];
+    }
+
     /**
      * @return array[mixed]
      */
     private function getIdentifier()
     {
         return [
-            'column' => self::$idColumn,
+            'column' => static::$idColumn,
             'value'  => $this->id
         ];
-    }
-
-    /**
-     * @return \Exception
-     */
-    public function exception()
-    {
-        return $this->exception;
     }
 
     /**
@@ -123,6 +136,47 @@ abstract class DbObject
     /**
      * @return bool
      */
+    public function create()
+    {
+        $id  = $this->getIdentifier();
+        $db  = $this->createZendDb();
+        $sql = new \Zend\Db\Sql\Sql($db);
+
+        $query = $sql->insert()
+            ->into(self::getTable())
+            ->values($this->fields)
+        ;
+
+        try {
+            $stmt   = $sql->prepareStatementForSqlObject($query);
+            $result = $stmt->execute();
+
+            $inserted_id = $result->getGeneratedValue();
+            $this->id    = $inserted_id;
+
+            if (isset($this->fields[$id['column']])) {
+                $this->fields[$id['column']] = $inserted_id;
+            }
+
+            foreach (static::$relations as $relation) {
+                if (isset($relation[2]) && $relation[2]) {
+                    $model = new $relation[0]();
+                    $model->$relation[1]($inserted_id);
+                    $model->create();
+                }
+            }
+        } catch (\Exception $e) {
+            $this->exception = $e;
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return bool
+     */
     public function delete()
     {
         $id     = $this->getIdentifier();
@@ -139,39 +193,30 @@ abstract class DbObject
     }
 
     /**
+     * @return \Exception
+     */
+    public function exception()
+    {
+        return $this->exception;
+    }
+
+    /**
      * @return bool
      */
-    public function save()
+    public function update()
     {
-        $id  = $this->getIdentifier();
-        $db  = $this->createZendDb();
-        $sql = new \Zend\Db\Sql\Sql($db);
-
-        if ($this->id === null) {
-            $query = $sql->insert()
-                ->into(self::getTable())
-                ->values($this->fields)
-            ;
-        } else {
-            $query = $sql->update()
-                ->table(self::getTable())
-                ->set($this->fields)
-                ->where([$id['column'] => $id['value']])
-            ;
-        }
+        $id    = $this->getIdentifier();
+        $db    = $this->createZendDb();
+        $sql   = new \Zend\Db\Sql\Sql($db);
+        $query = $sql->update()
+            ->table(self::getTable())
+            ->set($this->fields)
+            ->where([$id['column'] => $id['value']])
+        ;
 
         try {
             $stmt   = $sql->prepareStatementForSqlObject($query);
             $result = $stmt->execute();
-
-            if ($this->id === null) {
-                $inserted_id = $result->getGeneratedValue();
-                $this->id    = $inserted_id;
-
-                if (isset($this->fields[$id['column']])) {
-                    $this->fields[$id['column']] = $inserted_id;
-                }
-            }
         } catch (\Exception $e) {
             $this->exception = $e;
 
