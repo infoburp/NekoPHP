@@ -210,7 +210,14 @@ class NekoPHP
                 throw new \Exception('Method not found: '.$page.'::main()');
             }
 
-            return $page::main($env['parts'], $data);
+            $html = $page::main($env['parts'], $data);
+
+            // run after hook if it exists
+            if (method_exists('\NekoPHP\Shared\Shared', 'after')) {
+                $html = \NekoPHP\Shared\Shared::after($data, $html);
+            }
+
+            return $html;
         } catch (\Exception $e) {
             return $this->renderException($e);
         }
