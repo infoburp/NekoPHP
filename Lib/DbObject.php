@@ -103,7 +103,7 @@ abstract class DbObject
         $id       = $this->getIdentifier();
 
         if ($columns === []) {
-            throw new \Exception(get_class($this).' extends DbObject, but no fields are defined');
+            throw new \Exception(get_class($this).' extends DbObject, but no fields are defined', 1);
         }
 
         if ($id['value'] === null) {
@@ -122,7 +122,7 @@ abstract class DbObject
             $results = $stmt->execute();
 
             if ($results->count() != 1) {
-                throw new \Exception(sprintf('No record in table `%s` where %s = %s', $table, $id['column'], $id['value']));
+                throw new \Exception(sprintf('No record in table `%s` where %s = %s', self::getTable(), $id['column'], $id['value']), 2);
             }
 
             $row = $results->next();
