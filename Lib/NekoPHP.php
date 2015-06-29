@@ -169,7 +169,7 @@ class NekoPHP
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function run(array $env)
     {
@@ -187,10 +187,19 @@ class NekoPHP
 
             require $page_path;
 
+            // run before hook if it exists
+            if (file_exists(self::getRootDir().'/Shared/Shared.php')) {
+                require self::getRootDir().'/Shared/Shared.php';
+
+                if (method_exists('\NekoPHP\Shared\Shared', 'before')) {
+                    $data = \NekoPHP\Shared\Shared::before();
+                }
+            }
+
             // run the module initializer if it exists
             if (file_exists($this->getModuleDir().'/Module.php')) {
                 require $this->getModuleDir().'/Module.php';
-                $data = $module::module($this);
+                $data = $module::module($data);
             }
 
             if (!class_exists($page)) {
